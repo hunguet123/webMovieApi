@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./index.css">
+    <title>Document</title>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo"><img src="../public/asset/logo.png" alt=""></a>
+    </header>
+    <form class="form" action="/user/submit-login" method="POST">
+        <h2>Đăng nhập</h2>
+        <div class="form-input">
+            <input name="account" type="text" id="email" required>
+            <label for="email">Email</label>
+            <span id="messageErrorEmail"></span>
+        </div>
+        <div class="form-input">
+            <input name="password" type="text" id="password" required>
+            <label for="password">Mật khẩu</label>
+            <span id="messageErrorPassword"></span>
+        </div>
+        <input type="submit" value="Đăng nhập">
+        <div class="form-help">
+            <a href="#">Quên mật khẩu<ion-icon name="help-circle-outline"></ion-icon></ion-icon></a>
+        </div>
+        <div class="form-info">
+            <h3>Bạn mới tham gia Netflix?<a href="">Đăng ký ngay.</a></h3>
+            <p>Trang này được Google reCAPTCHA bảo vệ để đảm bảo bạn không phải là robot <span onclick="active()">Tìm hiểu thêm.</span></p>
+            <p>Thông tin do Google reCAPTCHA thu thập sẽ tuân theo <a href="">Chính sách Quyền riêng tư</a> and <a href="">Điều khoản dịch vụ </a>của Google, và được dùng để cung cấp, duy trì và cải thiện dịch vụ reCAPTCHA cũng như các mục đích bảo mật nói chung (thông tin này không được dùng để cá nhân hóa quảng cáo của Google).</p>
+        </div>
+    </form>
+    <section class="footer">
+        <div class="footer-container">
+            <a href="#">Bạn có câu hỏi? Liên hệ với chúng tôi.</a>
+            <div class="footer-help">
+                <div>
+                    <a href="#">Câu hỏi thường gặp</a>
+                </div>
+                <div>
+                    <a href="#">Trung tâm trợ giúp</a>
+                </div>
+                <div>
+                    <a href="#">Điều khoản sử dụng</a>
+                </div>
+                <div>
+                    <a href="#">Quyền riêng tư</a>
+                </div>
+                <div>
+                    <a href="#">Tùy chọn cookie</a>
+                </div>
+                <div>
+                    <a href="#">Thông tin doanh nghiệp</a>
+                </div>
+            </div>
+            <div class="footer-languages">
+                <div>
+                    <ion-icon name="earth-outline"></ion-icon>
+                    <p>Tiếng Việt <ion-icon name="chevron-down-outline"></ion-icon></p>
+                </div>
+                <ul>
+                    <li><a href="#">Tiếng Việt</a></li>
+                    <li><a href="#">English</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+<script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+<script src="./validate.js"></script>
+<script>
+    new Validate({
+            form: '.form',
+            rules:[
+                Validate.isValidate('#email', '#messageErrorEmail', [{regex: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, message: 'Vui lòng nhập đúng email của bạn'}]),
+                Validate.isValidate('#password', '#messageErrorPassword',[
+                    {regex:/(?=.*[a-z])/, message: 'Mật khẩu phải chứa chữ cái in thường'},
+                    {regex: /(?=.*[A-Z])/, message: 'Mật khẩu phải chứa chữ cái in hoa'}, 
+                    {regex: /(?=.*[0-9])/, message: 'Mật khẩu phải chứa số từ 0 đến 9'},
+                    {regex: /(?=.*[!@#$%^&*])/, message: 'Mật khẩu phải chứa kí tự đặc biệt'},
+                    {regex: /(?=.{8,})/, message: 'Mật khẩu phải chứa ít nhất 8 kí tự'}
+                ]),
+            ]
+        })
+</script>
+<script>
+    window.addEventListener('click', function(event) {
+        if(!document.querySelector('.footer .footer-languages > div').contains(event.target))
+            document.querySelector('.footer .footer-languages').classList.remove('active')
+        else 
+            document.querySelector('.footer .footer-languages').classList.toggle('active')
+    })
+    function active() {
+        document.querySelector('form .form-info > p:last-child').classList.add('active')
+        document.querySelector('form > .form-info > p > span').style.display = 'none'
+    }
+</script>
+</body>
+</html>
