@@ -11,7 +11,6 @@ const UserSchema = new Schema(
         family_name: { type: String, default: '' },
         email: { type: String, default: '', unique: true },
         email_verified: { type: Boolean, default: 'false' },
-        phone: { type: String, default: '' },
         password: { type: String, default: '' },
         picture: { 
             name: {type: String, default: 'default.jpg',},

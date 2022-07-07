@@ -18,6 +18,7 @@ const AccountStatus = Object.freeze({
 // Google Auth
 const { OAuth2Client } = require('google-auth-library');
 const { env } = require('process');
+const { use } = require('../routes/user.route.js');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 // [Nodemailer]
@@ -39,43 +40,57 @@ const saltRounds = 10;
 // Default algorithm: HMAC SHA256
 const JWTPrivateKey = process.env.JWT_PRIVATE_KEY;
 
+//var CODE =  '123456';
+var CODE = Math.random().toString(36).substring(2,7);
+console.log(CODE);
+
 //===========================
 class userController {
 
-    //[GET] /user/asset
-    asset(req, res, next) {
-        res.sendFile(path.resolve('server', 'views', 'asset'));
-    }
-
-    //[GET] /user/index.css
-    index(req, res, next) {
-        console.log(path.resolve('server', 'views', 'index.css'))
-        res.sendFile(path.resolve('server', 'views', 'index.css'))
-    }
-
-    //[GET] /user/register:/token
+    //[GET] /user/register
     register(req, res, next) {
-        console.log(req.params.token)
-        res.status(200).json({
-            token: req.params.token
-        })
+        res.render('register');
     }
 
-    // [POST] /user/register:/token
-    async submitRegister(req, res, next) {
-        const { username, email, phone, password } = req.body;
-        console.log(username, email, phone, password);
+    //[POST] /user/email/excited
+    emailExcited(req, res, next) {
+        const { email } = req.body;
+        console.log(req.body);
         //Check existing username & email & phone in DB:
-        const user = await UserModel.findOne({ $or: [{ username: username }, { email: email }, { phone: phone }] });
+        UserModel.findOne({email: email}, function (err, user) {
+            if (err){
+                console.log(err)
+            }
+            else{
+                console.log("Result : ", user);
+                if (user) {
+                    res.status(200).json({
+                        message: true,
+                    })
+                } else {
+                    res.status(200).json({
+                        message: false,
+                    })
+                }
+            }
+        });
+    }
+
+    // [POST] /user/register
+    async submitRegister(req, res, next) {
+        const { username, email, password } = req.body;
+        console.log(req.body);
+        //Check existing username & email & phone in DB:
+         const user = await UserModel.findOne({ $and: [{email: email},  {email_verified: true}]});
         if (user) {
             return res.status(403).json({
                 message: `Username /email /phone number is already used.`,
                 username_existed: (username == user.username) ? true : false,
                 email_existed: (email == user.email) ? true : false,
-                phone_existed: (phone == user.phone) ? true : false,
             });
         }
-        bcrypt.hash(password, saltRounds, function(err, hashedPwd) {
+
+        await bcrypt.hash(password, saltRounds, function(err, hashedPwd) {
             // Store hash in your password DB.
             if (err) {
                 return res.status(500).json({
@@ -87,92 +102,82 @@ class userController {
             let userRecord = new UserModel({
                 username: username,
                 email: email,
-                phone: phone,
                 password: hashedPwd,
             });
             userRecord.save()
                 .then(user => {
-                    res.status(200).json({
-                        message: `Saved a new user`,
-                        user_data: user,
-                    });
+                    console.log('saved');
                 })
                 .catch(err => {
-                    res.status(500).json({
-                        message: `Error when saving user information to DB`,
+                   console.log(err);
+                });
+        });
+        let token = jwt.sign({ email: email }, JWTPrivateKey, { expiresIn: '3h' });
+            // get link http://localhost:3030/user/activate-account/:token
+            //const link = `http://${process.env.FRONTEND_HOST}:${process.env.BE_PORT}/user/register/${token}`;
+            let info = {
+                from: {
+                    name: "Tiro Accounts",
+                    address: process.env.GOOGLE_EMAIL,
+                },
+                to: `${email}`,
+                subject: "Tiro Account Activation.",
+                text: CODE,
+            };
+            transporter.sendMail(info, (err,data) => {
+                if (err) {
+                    console.log('lỗi: ',err);
+                } else {
+                    // render ra trang nhap code nhap
+                    res.render(`enter-code`, {
+                        token: token,
+                        code: CODE,
+                    });
+                }
+            });
+
+    }    
+
+
+    // [POST] /user/activate-account/
+    activateAccount(req, res, next) {
+        // email gui ve mot ma token so sanh token voi code nhap tu ban phim
+        const { code, token } = req.body;
+
+        if (code == CODE) {
+            jwt.verify(token, JWTPrivateKey, (err, payload) => {
+                if (err) {
+                    return res.status(500).json({
+                        message: `Invalid or expired token`,
                         error: err.message
                     });
-                });
-        });
-    }
-
-    // [POST] /user/confirm-email
-    async confirmEmail(req, res, next) {
-        const { email } = req.body;
-        //Check existing email in DB:
-        const user = await UserModel.findOne({email: email });
-        if (user) {
-            return res.status(403).json({
-                message: `Email is already used`,
-                email_existed: (email == user.email) ? true: false
+                }
+                const email = payload.email;
+                UserModel.findOneAndUpdate({ email: email }, { email_verified: true })
+                    .then(user => {
+                        if (user) {
+                            //res.render('activate', { email: user.email });
+                            res.status(200).json({
+                                message: `Successful when activating account`,
+                                user_data: user
+                            });
+                        } else {
+                            res.status(404).json({
+                                message: `Account not found`,
+                                user_data: null
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        res.status(500).json(err);
+                    })
             });
         } else {
-            let token = jwt.sign({ email: email }, JWTPrivateKey, { expiresIn: '3h' });
-                    // get link http://localhost:3030/user/activate-account/:token
-                    const link = `http://${process.env.FRONTEND_HOST}:${process.env.BE_PORT}/user/register/${token}`;
-                    let info = {
-                        from: {
-                            name: "Tiro Accounts",
-                            address: process.env.GOOGLE_EMAIL,
-                        },
-                        to: `${email}`,
-                        subject: "Tiro Account Activation.",
-                        text: link,
-                    };
-                    transporter.sendMail(info, (err,data) => {
-                        if (err) {
-                            console.log(err);
-                        } else {
-                            res.redirect('/');
-                        }
-                    });
-                    res.status(200).json({
-                        message: `send mail register with gg auth successfull`,
-                    });
+            res.status(202).json({
+                message: `the code is not correct`
+            });
         }
-    }
-    
-
-    // [GET] /user/activate-account/:token
-    activateAccount(req, res, next) {
-        const { token } = req.params;
-        jwt.verify(token, JWTPrivateKey, (err, payload) => {
-            if (err) {
-                return res.status(500).json({
-                    message: `Invalid or expired token`,
-                    error: err.message
-                });
-            }
-            const email = payload.email;
-            UserModel.findOneAndUpdate({ email: email }, { email_verified: true })
-                .then(user => {
-                    if (user) {
-                        //res.render('activate', { email: user.email });
-                        res.status(200).json({
-                            message: `Successful when activating account`,
-                            user_data: user
-                        });
-                    } else {
-                        res.status(404).json({
-                            message: `Account not found`,
-                            user_data: null
-                        });
-                    }
-                })
-                .catch(err => {
-                    res.status(500).json(err);
-                })
-        });
+        
     }
 
     // [GET] /user/login

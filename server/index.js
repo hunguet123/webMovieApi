@@ -26,11 +26,14 @@ app.use(cors(corsOptions));
 
 //Connect to MongoDB
 const db = require('./config/db/index.db');
+const exp = require('constants');
 db.connect();
 
 //------ Middleware -----//
 //[express] Serving static files in express
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, 'public')));
+//app.use('/static',express.static(''))
 //[cookie-parser] Parse cookie header
 app.use(cookieParser());
 //[body-parser] Parse request object as a JSON object: application/json
