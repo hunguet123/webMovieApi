@@ -4,8 +4,6 @@ const QRcode = require('qrcode');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const {FRONTEND_HOST} = process.env;
-
 class siteController {
     //[GET] /public
     public(req, res) {

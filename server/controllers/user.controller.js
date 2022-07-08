@@ -18,7 +18,7 @@ const AccountStatus = Object.freeze({
 // Google Auth
 const { OAuth2Client } = require('google-auth-library');
 const { env } = require('process');
-const { use } = require('../routes/user.route.js');
+
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
 // [Nodemailer]
@@ -40,9 +40,11 @@ const saltRounds = 10;
 // Default algorithm: HMAC SHA256
 const JWTPrivateKey = process.env.JWT_PRIVATE_KEY;
 
-//var CODE =  '123456';
 var CODE = Math.random().toString(36).substring(2,7);
-console.log(CODE);
+
+const TIMEOUT = 6000;
+
+var info = {};
 
 //===========================
 class userController {
@@ -55,14 +57,12 @@ class userController {
     //[POST] /user/email/excited
     emailExcited(req, res, next) {
         const { email } = req.body;
-        console.log(req.body);
         //Check existing username & email & phone in DB:
         UserModel.findOne({email: email}, function (err, user) {
             if (err){
                 console.log(err)
             }
             else{
-                console.log("Result : ", user);
                 if (user) {
                     res.status(200).json({
                         message: true,
@@ -79,7 +79,6 @@ class userController {
     // [POST] /user/register
     async submitRegister(req, res, next) {
         const { username, email, password } = req.body;
-        console.log(req.body);
         //Check existing username & email & phone in DB:
          const user = await UserModel.findOne({ $and: [{email: email},  {email_verified: true}]});
         if (user) {
@@ -90,32 +89,8 @@ class userController {
             });
         }
 
-        await bcrypt.hash(password, saltRounds, function(err, hashedPwd) {
-            // Store hash in your password DB.
-            if (err) {
-                return res.status(500).json({
-                    message: `Error when hash password with bcrypt`,
-                    error: err.message
-                });
-            }
-
-            let userRecord = new UserModel({
-                username: username,
-                email: email,
-                password: hashedPwd,
-            });
-            userRecord.save()
-                .then(user => {
-                    console.log('saved');
-                })
-                .catch(err => {
-                   console.log(err);
-                });
-        });
         let token = jwt.sign({ email: email }, JWTPrivateKey, { expiresIn: '3h' });
-            // get link http://localhost:3030/user/activate-account/:token
-            //const link = `http://${process.env.FRONTEND_HOST}:${process.env.BE_PORT}/user/register/${token}`;
-            let info = {
+            info = {
                 from: {
                     name: "Tiro Accounts",
                     address: process.env.GOOGLE_EMAIL,
@@ -124,26 +99,80 @@ class userController {
                 subject: "Tiro Account Activation.",
                 text: CODE,
             };
+            console.log('dong 102', info);
             transporter.sendMail(info, (err,data) => {
                 if (err) {
-                    console.log('lỗi: ',err);
+                    return res.status(200).json({
+                        message: 'no email on google', 
+                    })
                 } else {
-                    // render ra trang nhap code nhap
-                    res.render(`enter-code`, {
-                        token: token,
-                        code: CODE,
+                    // nếu không lỗi thì sẽ có mail để gửi, gửi rồi mới lưu trong db
+                    bcrypt.hash(password, saltRounds, function(err, hashedPwd) {
+                        // Store hash in your password DB.
+                        if (err) {
+                            return res.status(500).json({
+                                message: `Error when hash password with bcrypt`,
+                                error: err.message
+                            });
+                        }
+            
+                        let userRecord = new UserModel({
+                            username: username,
+                            email: email,
+                            password: hashedPwd,
+                        });
+                        userRecord.save()
+                            .then(user => {
+                                console.log('saved');
+                            })
+                            .catch(err => {
+                               console.log(err);
+                            });
                     });
+                    
+                    // render ra trang nhap code nhap
+                    res.redirect(`/user/enter-code/${token}`);
                 }
             });
 
     }    
 
+    //[GET] /user/enter-code/:token
+    enterCode(req, res, next) {
+        const { token } = req.params;
+        // let enter_code = false;
+        // // TODO làm phần gửi lại mail sau 1 thời gian là 60 giây
+        // while(!enter_code) {
+        //     setTimeout(() => {
+        //         transporter.sendMail(info, (err,data) => {
+        //         if (err) {
+        //             console.log(err);
+        //         }
+        //         console.log('guwri mail');
+        //         });
+        //     }, TIMEOUT); 
+        // }
+        
+            setTimeout(() => {
+                CODE = Math.random().toString(36).substring(2,7);
+                console.log(CODE);
+                transporter.sendMail(info, (err,data) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log('guwri mail');
+                });
+            }, TIMEOUT); 
 
-    // [POST] /user/activate-account/
+        res.render('enter-code', {token: token});
+    }
+
+
+    // [POST] /user/activate-account/:token
     activateAccount(req, res, next) {
         // email gui ve mot ma token so sanh token voi code nhap tu ban phim
-        const { code, token } = req.body;
-
+        const { code } = req.body;
+        const { token } = req.params;
         if (code == CODE) {
             jwt.verify(token, JWTPrivateKey, (err, payload) => {
                 if (err) {
@@ -183,7 +212,8 @@ class userController {
     // [GET] /user/login
     
     login(req, res, next) {
-        res.render('login', { data: req.body });
+        console.log(req.body)
+        res.render('login');
     }
     
 

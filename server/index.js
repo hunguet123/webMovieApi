@@ -33,7 +33,7 @@ db.connect();
 //[express] Serving static files in express
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/', express.static(path.join(__dirname, 'public')));
-//app.use('/static',express.static(''))
+
 //[cookie-parser] Parse cookie header
 app.use(cookieParser());
 //[body-parser] Parse request object as a JSON object: application/json

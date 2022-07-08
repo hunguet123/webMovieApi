@@ -1,4 +1,3 @@
-const UserModel = require('../models/user.model.js');
 const {RoleOptions, PostStatus} = require('../types/custom-types.js');
 
 class adminController {

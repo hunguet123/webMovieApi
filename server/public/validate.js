@@ -1,22 +1,11 @@
-var Validate = function(object) {
+var Validate =  function(object) {
     let formElement = document.querySelector(object.form)
     // khi người dùng submit
     formElement.onsubmit = function(e) {
-         let isTrue = true
-         let values = []
-         object.rules.forEach(rule => {
-             // chạy tất cả các điều kiện và kiểm tra
-             values.push(rule.method(...rule.params))
-             if(!values[values.length - 1]) {
-                 isTrue = false
-             }
-         });
-         if(!isTrue) {
-             e.preventDefault()
-         } else {
-             console.log(values);
-         }
+        e.preventDeault()
+        
     }
+    
  }
  
  Validate.testRegex = function(inputElement, messageElement, conditions) {
@@ -39,19 +28,37 @@ var Validate = function(object) {
      }
  }
  
- Validate.testExisted = function(inputElement, messageElement, message, server) {
-    const xhr = new XMLHttpRequest()
-    xhr.open("POST", server)
-    xhr.setRequestHeader("Content-Type", "application/json")
-    xhr.send(JSON.stringify({email: inputElement.value}))
-    xhr.onload = function() {
-        if(JSON.parse(xhr.response).message) {
-            messageElement.innerText = message
-            return messageElement.value
-        } else {
-            messageElement.innerText = ''
-            return false
+ Validate.testExisted = async function(inputElement, messageElement, message, server) {
+    // let result = false
+    // const xhr = new XMLHttpRequest()
+    // xhr.open("POST", server)
+    // xhr.setRequestHeader("Content-Type", "application/json")
+    // xhr.send(JSON.stringify({email: inputElement.value}))
+    // xhr.onload = function() {
+    //     if(JSON.parse(xhr.response).message) {
+    //         messageElement.innerText = message
+    //     } else {
+    //         messageElement.innerText = ''
+    //         result = true
+    //     }
+    // }
+    // return reulst
+    const response = await fetch(server, {
+        method: 'post',
+        body: JSON.stringify({email: inputElement.value}),
+        headers: {
+            "Content-Type": "application/json"
         }
+    })
+    const jsonResponse = await response.json();
+    console.log('checking');
+    if(jsonResponse.message) {
+        messageElement.innerText = message
+        console.log('email bị trùng');
+        return false
+    } else {
+        messageElement.innerText = ''
+        return true
     }
  }
 
