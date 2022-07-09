@@ -36,29 +36,29 @@ var Validate = function(object) {
      }
  }
  
- Validate.testExisted = function(inputElement, messageElement, message, server) {
-    console.log('testExisted');
-    const response = fetch(server, {
-        method: 'post',
-        body: JSON.stringify({email: inputElement.value}),
-        headers: {
-            "Content-Type": "application/json"
-        }
-    })
-    return response
-    .then(data => data.json())
-    .then(dataJson => {
-        if(dataJson.message) {
-            messageElement.innerText = message
-            console.log('email bị trùng');
-            return false
-        } else {
-            console.log('not existed')
-            messageElement.innerText = ''
-            return true
-        }
-    })
- }
+//  Validate.testExisted = function(inputElement, messageElement, message, server) {
+//     console.log('testExisted');
+//     const response = fetch(server, {
+//         method: 'post',
+//         body: JSON.stringify({email: inputElement.value}),
+//         headers: {
+//             "Content-Type": "application/json"
+//         }
+//     })
+//     return response
+//     .then(data => data.json())
+//     .then(dataJson => {
+//         if(dataJson.message) {
+//             messageElement.innerText = message
+//             console.log('email bị trùng');
+//             return false
+//         } else {
+//             console.log('not existed')
+//             messageElement.innerText = ''
+//             return true
+//         }
+//     })
+//  }
 
  Validate.testConfirm = function(inputConfirmElement, inputElement, messageElement, message) {
      if(inputConfirmElement.value === inputElement.value && inputConfirmElement.value) {
@@ -107,21 +107,21 @@ var Validate = function(object) {
      }
  }
  
- Validate.isExisted = function(selectorInput, selectorMessage, message, server) {
-    let inputElement = document.querySelector(selectorInput);
-    let messageElement = inputElement.parentNode.querySelector(selectorMessage);
-    inputElement.onchange = function() {
-        Validate.testExisted(inputElement, messageElement, message, server)
-    }
-    inputElement.oninput = function() {
-        inputElement.parentNode.classList.remove('invalid')
-        messageElement.innerText = ''
-    }
-    return {
-        params: [inputElement, messageElement, message, server],
-        method: Validate.testExisted
-    }
- }
+//  Validate.isExisted = function(selectorInput, selectorMessage, message, server) {
+//     let inputElement = document.querySelector(selectorInput);
+//     let messageElement = inputElement.parentNode.querySelector(selectorMessage);
+//     inputElement.onchange = function() {
+//         Validate.testExisted(inputElement, messageElement, message, server)
+//     }
+//     inputElement.oninput = function() {
+//         inputElement.parentNode.classList.remove('invalid')
+//         messageElement.innerText = ''
+//     }
+//     return {
+//         params: [inputElement, messageElement, message, server],
+//         method: Validate.testExisted
+//     }
+//  }
 
  Validate.isConfirm = function(selectorInput, selectorConfirmInput, selectorMessage, message) {
      let inputElement = document.querySelector(selectorInput);
