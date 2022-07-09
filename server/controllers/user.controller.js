@@ -34,7 +34,7 @@ const transporter = nodemailer.createTransport({
 // [Bcrypt]
 //const saltRounds = process.env.SALT_ROUNDS;
 // do không dùng được env.SALT_ROUNDS nên dùng luôn là 10
-const saltRounds = 10;
+const saltRounds = process.env.SALT_ROUNDS;
 
 // [JWT sign]
 // Default algorithm: HMAC SHA256
