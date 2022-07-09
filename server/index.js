@@ -4,10 +4,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const initRoutes = require('./routes/index.route.js');
 const cors = require('cors');
-const dotenv = require('dotenv');
-dotenv.config();
-
-const { env } = require('process');
+require('dotenv').config();
 
 //Get hostname & port
 const backendHostName = process.env.BACKEND_HOST;
