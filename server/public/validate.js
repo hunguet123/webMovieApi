@@ -1,12 +1,20 @@
-var Validate =  function(object) {
+var Validate = function(object) {
     let formElement = document.querySelector(object.form)
-    // khi người dùng submit
-    formElement.onsubmit = function(e) {
-        e.preventDeault()
-        
+    formElement.onsubmit = async function(e) {
+        e.preventDefault()
+        let isTrue = true
+        for(let i = 0; i < object.rules.length; i++) {
+            let result = await object.rules[i].method(...object.rules[i].params)
+            console.log(result);
+            if(!result)
+                isTrue = false
+        }
+        if(isTrue)
+           formElement.submit()
     }
+}
     
- }
+ 
  
  Validate.testRegex = function(inputElement, messageElement, conditions) {
      let isTrue = true
@@ -21,56 +29,46 @@ var Validate =  function(object) {
      if(isTrue) {
          inputElement.parentNode.classList.remove('invalid')
          messageElement.innerText = ''
-         return inputElement.value
+         return true
          
      } else {
-         return undefined
+         return false
      }
  }
  
- Validate.testExisted = async function(inputElement, messageElement, message, server) {
-    // let result = false
-    // const xhr = new XMLHttpRequest()
-    // xhr.open("POST", server)
-    // xhr.setRequestHeader("Content-Type", "application/json")
-    // xhr.send(JSON.stringify({email: inputElement.value}))
-    // xhr.onload = function() {
-    //     if(JSON.parse(xhr.response).message) {
-    //         messageElement.innerText = message
-    //     } else {
-    //         messageElement.innerText = ''
-    //         result = true
-    //     }
-    // }
-    // return reulst
-    const response = await fetch(server, {
+ Validate.testExisted = function(inputElement, messageElement, message, server) {
+    console.log('testExisted');
+    const response = fetch(server, {
         method: 'post',
         body: JSON.stringify({email: inputElement.value}),
         headers: {
             "Content-Type": "application/json"
         }
     })
-    const jsonResponse = await response.json();
-    console.log('checking');
-    if(jsonResponse.message) {
-        messageElement.innerText = message
-        console.log('email bị trùng');
-        return false
-    } else {
-        messageElement.innerText = ''
-        return true
-    }
+    return response
+    .then(data => data.json())
+    .then(dataJson => {
+        if(dataJson.message) {
+            messageElement.innerText = message
+            console.log('email bị trùng');
+            return false
+        } else {
+            console.log('not existed')
+            messageElement.innerText = ''
+            return true
+        }
+    })
  }
 
  Validate.testConfirm = function(inputConfirmElement, inputElement, messageElement, message) {
      if(inputConfirmElement.value === inputElement.value && inputConfirmElement.value) {
          inputConfirmElement.parentNode.classList.remove('invalid')
          messageElement.innerText = ''
-         return inputConfirmElement.value
+         return true
      } else {
          inputConfirmElement.parentNode.classList.add('invalid')
          messageElement.innerText = message
-         return undefined
+         return false
      }
  }
  
@@ -84,11 +82,11 @@ var Validate =  function(object) {
      if(values.length) {
          messageElement.innerText = ''
          inputElements[0].parentNode.classList.remove('invalid')
-         return values
+         return true
      } else {
          messageElement.innerText = message
          inputElements[0].parentNode.classList.remove('invalid')
-         return undefined
+         return false
      }
  }
  

@@ -78,93 +78,44 @@ class userController {
 
     // [POST] /user/register
     async submitRegister(req, res, next) {
-        const { username, email, password } = req.body;
+        const { name, email, password } = req.body;
         //Check existing username & email & phone in DB:
          const user = await UserModel.findOne({ $and: [{email: email},  {email_verified: true}]});
         if (user) {
             return res.status(403).json({
-                message: `Username /email /phone number is already used.`,
-                username_existed: (username == user.username) ? true : false,
-                email_existed: (email == user.email) ? true : false,
+                message: `name /email /phone number is already used.`,
             });
         }
 
-        let token = jwt.sign({ email: email }, JWTPrivateKey, { expiresIn: '3h' });
+        let text = 'Nhập Code để xác minh tài khoản („• ֊ •„) \n Lưu ý: Không nhập code sẽ không đăng nhập được \n Code: ' + CODE;
+        console.log(CODE);
+        let token = jwt.sign({name: name, email: email, password: password }, JWTPrivateKey, { expiresIn: '3h' });
             info = {
                 from: {
-                    name: "Tiro Accounts",
+                    name: "Ánh dễ thương (◕‿◕)",
                     address: process.env.GOOGLE_EMAIL,
                 },
                 to: `${email}`,
-                subject: "Tiro Account Activation.",
-                text: CODE,
+                subject: "BÉ ƠI NHỚ NHẬP CODE ĐI",
+                text: text,
             };
-            console.log('dong 102', info);
             transporter.sendMail(info, (err,data) => {
                 if (err) {
                     return res.status(200).json({
                         message: 'no email on google', 
                     })
                 } else {
-                    // nếu không lỗi thì sẽ có mail để gửi, gửi rồi mới lưu trong db
-                    bcrypt.hash(password, saltRounds, function(err, hashedPwd) {
-                        // Store hash in your password DB.
-                        if (err) {
-                            return res.status(500).json({
-                                message: `Error when hash password with bcrypt`,
-                                error: err.message
-                            });
-                        }
-            
-                        let userRecord = new UserModel({
-                            username: username,
-                            email: email,
-                            password: hashedPwd,
-                        });
-                        userRecord.save()
-                            .then(user => {
-                                console.log('saved');
-                            })
-                            .catch(err => {
-                               console.log(err);
-                            });
-                    });
-                    
                     // render ra trang nhap code nhap
-                    res.redirect(`/user/enter-code/${token}`);
+                    res.redirect(`/user/verify/${token}`);
                 }
             });
 
     }    
 
-    //[GET] /user/enter-code/:token
-    enterCode(req, res, next) {
+    //[GET] /user/verify/:token
+    verify(req, res, next) {
         const { token } = req.params;
-        // let enter_code = false;
-        // // TODO làm phần gửi lại mail sau 1 thời gian là 60 giây
-        // while(!enter_code) {
-        //     setTimeout(() => {
-        //         transporter.sendMail(info, (err,data) => {
-        //         if (err) {
-        //             console.log(err);
-        //         }
-        //         console.log('guwri mail');
-        //         });
-        //     }, TIMEOUT); 
-        // }
-        
-            setTimeout(() => {
-                CODE = Math.random().toString(36).substring(2,7);
-                console.log(CODE);
-                transporter.sendMail(info, (err,data) => {
-                if (err) {
-                    console.log(err);
-                }
-                console.log('guwri mail');
-                });
-            }, TIMEOUT); 
-
-        res.render('enter-code', {token: token});
+        res.render('verify', {token: token});
     }
 
 
@@ -182,24 +133,35 @@ class userController {
                     });
                 }
                 const email = payload.email;
-                UserModel.findOneAndUpdate({ email: email }, { email_verified: true })
-                    .then(user => {
-                        if (user) {
-                            //res.render('activate', { email: user.email });
+                const name = payload.name;
+                const password = payload.password;
+                bcrypt.hash(password, saltRounds, function(err, hashedPwd) {
+                    // Store hash in your password DB.
+                    if (err) {
+                        return res.status(500).json({
+                            message: `Error when hash password with bcrypt`,
+                            error: err.message
+                        });
+                    }
+                    console.log(email, name, password);
+                    let userRecord = new UserModel({
+                        name: name,
+                        email: email,
+                        email_verified: true,
+                        password: hashedPwd,
+                    });
+                    userRecord.save()
+                        .then(user => {
+                            console.log('saved');
                             res.status(200).json({
-                                message: `Successful when activating account`,
-                                user_data: user
-                            });
-                        } else {
-                            res.status(404).json({
-                                message: `Account not found`,
-                                user_data: null
-                            });
-                        }
-                    })
-                    .catch(err => {
-                        res.status(500).json(err);
-                    })
+                                message: 'Verification successful',
+                            })
+                        })
+                        .catch(err => {
+                           console.log('lỗi khi lưu db',err);
+                        });
+                });
+
             });
         } else {
             res.status(202).json({

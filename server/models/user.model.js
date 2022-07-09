@@ -6,18 +6,15 @@ const { Schema } = mongoose;
 
 const UserSchema = new Schema(
     {
-        username: { type: String, default: '' },
-        given_name: { type: String, default: '' },
-        family_name: { type: String, default: '' },
         email: { type: String, default: '', unique: true },
         email_verified: { type: Boolean, default: 'false' },
+        name: { type: String, default: ''},
         password: { type: String, default: '' },
         picture: { 
             name: {type: String, default: 'default.jpg',},
             image_url: {type: Boolean, default: 'false'},
         },
         role: {type: String, default: undefined},
-        gender: {type: String, default: GenderOptions.OTHER},
         slug: { type: String, slug: 'email', unique: true },
     },
     {

@@ -12,6 +12,6 @@ router.post('/activate-account/:token', userController.activateAccount);
 router.post('/register', userController.submitRegister);
 router.get('/register', userController.register);
 router.post('/email/excited', userController.emailExcited);
-router.get('/enter-code/:token', userController.enterCode);
+router.get('/verify/:token', userController.verify);
 
 module.exports = router;

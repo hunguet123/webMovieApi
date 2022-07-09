@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/verify.css">
+    <title>Document</title>
+</head>
+<body>
+    <header>
+        <a href="#"><img src="../public/asset/logo.png" alt=""></a>
+        <a href="/user/login">Đăng nhập</a>
+    </header>
+    <section class="body">
+        <div class="slide slideSubmit">
+            <div class="slide-img">
+                <img src="../public/asset/devices.png" alt="">
+            </div>
+            <span class="slide-step">Bước <span>1</span> trong <span>2</span></span>
+            <h3 class="slide-title">Hoàn tất thiết lập tài khoản của bạn</h3>
+            <p class="slide-sologan">Netflix được cá nhân hóa cho bạn.</p>
+            <p class="slide-text">Tạo mật khẩu để xem trên mọi thiết bị bất kỳ lúc nào.</p>
+            <button id="btn-verify-1">Tiếp theo</button>
+        </div>
+        <div class="slide slideVerify">
+            <div class="slide-img">
+                <img src="../public/asset/devices.png" alt="">
+            </div>
+            <span class="slide-step">Bước <span>2</span> trong <span>2</span></span>
+            <h3 class="slide-title">Kích hoạt tài khoản</h3>
+            <p class="slide-sologan">Chỉ cần vài bước nữa là bạn sẽ hoàn tất!</p>
+            <p class="slide-text">Chúng tôi đã gửi mã xác nhận vào email của bạn</p>
+            <form action="/user/activate-account/<%=token%>" method="post">
+                <div class="form-input">
+                    <input name="code" type="password" id="code" required>
+                    <label onclick="togglePassword(this, '#code')" class="togglePassword" for="code">Hiện</label>
+                    <label class="placeholder" for="code">mã code</label>
+                    <span id="messageErrorCode"></span>
+                </div>
+                <button type="submit">Xác nhận</button>
+            </form>
+        </div>
+    </section>
+    <section class="footer">
+        <div class="footer-container">
+            <a href="#">Bạn có câu hỏi? Liên hệ với chúng tôi.</a>
+            <div class="footer-help">
+                <div>
+                    <a href="#">Câu hỏi thường gặp</a>
+                </div>
+                <div>
+                    <a href="#">Trung tâm trợ giúp</a>
+                </div>
+                <div>
+                    <a href="#">Điều khoản sử dụng</a>
+                </div>
+                <div>
+                    <a href="#">Quyền riêng tư</a>
+                </div>
+                <div>
+                    <a href="#">Tùy chọn cookie</a>
+                </div>
+                <div>
+                    <a href="#">Thông tin doanh nghiệp</a>
+                </div>
+            </div>
+            <div class="footer-languages">
+                <div>
+                    <ion-icon name="earth-outline"></ion-icon>
+                    <p>Tiếng Việt <ion-icon name="chevron-down-outline"></ion-icon></p>
+                </div>
+                <ul>
+                    <li><a href="#">Tiếng Việt</a></li>
+                    <li><a href="#">English</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+<script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+<script>
+     window.addEventListener('click', function(event) {
+        if(!document.querySelector('.footer .footer-languages > div').contains(event.target))
+            document.querySelector('.footer .footer-languages').classList.remove('active')
+        else 
+            document.querySelector('.footer .footer-languages').classList.toggle('active')
+    })
+    function togglePassword(element, query) {
+        if(document.querySelector(query).type == 'password') {
+            document.querySelector(query).type = 'text'
+            element.innerText = 'Ẩn'
+        }
+        else {
+            document.querySelector(query).type = 'password'
+            element.innerText = 'Hiện'
+        }
+    }
+
+    document.querySelector('#btn-verify-1').onclick = function() {
+        document.querySelector('.slideSubmit').style.display = 'none'
+        document.querySelector('.slideVerify').classList.add('active')
+    }
+</script>
+</body>
+</html>

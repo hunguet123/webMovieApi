@@ -26,7 +26,7 @@ app.use(cors(corsOptions));
 
 //Connect to MongoDB
 const db = require('./config/db/index.db');
-const exp = require('constants');
+
 db.connect();
 
 //------ Middleware -----//
