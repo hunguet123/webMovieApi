@@ -4,13 +4,16 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const initRoutes = require('./routes/index.route.js');
 const cors = require('cors');
-require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config();
+
+const { env } = require('process');
 
 //Get hostname & port
 const backendHostName = process.env.BACKEND_HOST;
 const frontendHostName = process.env.FRONTEND_HOST;
 const FE_PORT = process.env.FE_PORT || 3000;
-const BE_PORT = process.env.BE_PORT //|| 3030;
+const BE_PORT = process.env.PORT || 3030;
 
 const corsOptions = {
     origin: `${frontendHostName}`,
