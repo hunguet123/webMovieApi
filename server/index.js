@@ -7,6 +7,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const { env } = require('process');
+
 //Get hostname & port
 const backendHostName = process.env.BACKEND_HOST;
 const frontendHostName = process.env.FRONTEND_HOST;
