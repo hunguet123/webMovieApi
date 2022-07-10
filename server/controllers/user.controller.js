@@ -250,122 +250,34 @@ class userController {
             })
     }
 
-    // [POST] /user/auth/google-login
-    async verifyGoogleLogin(req, res, next) {
-        const client = new OAuth2Client(GOOGLE_CLIENT_ID);
-        const google_token = req.body.credential;
-        try {
-            const ticket = await client.verifyIdToken({
-                idToken: google_token,
-                audience: GOOGLE_CLIENT_ID,
-            });
-            const payload = ticket.getPayload();
-            const email = payload.email;
-            const existingUser = await UserModel.findOne({ email: email });
-
-            if (existingUser) {
-                let token = jwt.sign({ email: email }, JWTPrivateKey, { expiresIn: '3h' });
-                res.cookie('session-token', token);
-                if (!existingUser.picture.image_url) {
-                    existingUser.picture.name = `/upload/avatar/${existingUser.picture.name}`;
-                }
-
-                if (existingUser.username && existingUser.phone /*&& existingUser.password*/) {
-                    res.status(200).json({
-                        is_correct: true,
-                        enough_data: true,
-                        account_status: AccountStatus.EXISTENT_ACCOUNT,
-                        message: 'Login successfully!',
-                        user_data: existingUser,
-                        token: token
-                    });
-                } else {
-                    res.status(200).json({
-                        is_correct: true,
-                        enough_data: false,
-                        account_status: AccountStatus.EXISTENT_ACCOUNT,
-                        message: 'Have not yet completed user data',
-                        user_data: existingUser,
-                        token: token
-                    });
-                }
-            } else {
-                const { email, given_name, family_name, picture, email_verified } = payload;
-                let userRecord = new UserModel({
-                    email: email,
-                    given_name: given_name,
-                    family_name: family_name,
-                    picture: {
-                        name: picture,
-                        image_url: true,
-                    },
-                    email_verified: email_verified,
-                });
-                userRecord.save()
-                    .then((user) => {
-                        let token = jwt.sign({ email: email }, JWTPrivateKey, { expiresIn: '3h' });
-                        res.cookie('session-token', token);
-                        if (!user.picture.image_url) {
-                            user.picture.name = `/upload/avatar/${user.picture.name}`;
-                        }
-                        res.status(200).json({
-                            is_correct: true,
-                            enough_data: false,
-                            account_status: AccountStatus.NEW_ACCOUNT,
-                            message: 'Create new account successfully!',
-                            user_data: user,
-                            token: token
-                        });
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        res.status(500).json({
-                            is_correct: false,
-                            enough_data: false,
-                            account_status: undefined,
-                            message: 'Error when saving user information to DB: ' + err.message,
-                            user_data: undefined,
-                            token: undefined
-                        });
-                    });
-            }
-        }
-        catch (err) {
-            console.log(err);
-            res.status(500).json({
-                is_correct: false,
-                account_status: undefined,
-                message: 'Error when verifying Google account: ' + err.message,
-                user_data: undefined
-            });
-        }
-    }
-
-    // [POST] /user/forgot-password
-
-    forgotPassword(req, res, next) {
+    // [POST] /user/forgot-password/send-code
+    sendCodeForgotPassword(req, res, next) {
         UserModel.findOne({ email: req.body.email })
             .then(user => {
                 if (!user) {
                     return res.status(404).json({ message: `User not found` });
                 }
-                const payload = { email: user.email };
-                let token = jwt.sign(payload, JWTPrivateKey + user.password, { expiresIn: '15m' });
-                const link = `http://${process.env.FRONTEND_HOST}:${process.env.FE_PORT}/user/reset-password/${user.id}/${token}`;
-                let info = {
+                const payload = { email: user.email, id: user.id };
+                let token = jwt.sign(payload, JWTPrivateKey, { expiresIn: '15m' });
+                
+                creatCode();
+
+                let text = 'Nhập Code để đặt lại mật khẩu („• ֊ •„) \n \n Code: ' + CODE;
+                info = {
                     from: {
-                        name: "Tiro Accounts",
+                        name: "Ánh dễ thương (◕‿◕)",
                         address: process.env.GOOGLE_EMAIL,
                     },
-                    to: `${user.email}`,
-                    subject: "Reset your Tiro password.",
-                    text: link,
-                };
+                    to: `${email}`,
+                    subject: "Mã xác nhận quên mật khẩu",
+                    text: text,
+                };                
+
                 transporter.sendMail(info, (err, data) => {
                     if (err) {
                         res.status(500).json({ message: `Error when sending an email`, error: err.message });
                     } else {
-                        res.status(200).json({ message: `Password reset link has been sent to user email` });
+                        res.status(200).json({ message: `Password reset Code has been sent to user email`, token: token });
                     }
                 });
             })
@@ -374,34 +286,36 @@ class userController {
             });
     }
 
+    //[POST] /user/forgot-password/verify-code
+    verifyForgotPasswordCode(req, res, next) {
+        const { code } = req.body;
+        if (code == CODE) {
+            res.status(202).json({
+                message: true,
+            })
+        } else {
+            res.status(202).json({
+                message: false,
+            })
+        }
 
-    // [GET] /user/reset-password/:id/:token
-    viewResetPassword(req, res, next) {
-        let { token } = req.params;
-        UserModel.findOne({ _id: req.params.id })
-            .then(user => {
-                try {
-                    const payload = jwt.verify(token, JWTPrivateKey + user.password);
-                    res.render('reset-password', { email: user.email });
-                } catch (err) {
-                    console.log(err.message);
-                    res.send('Invalid or expired token!');
-                }
-            })
-            .catch(() => {
-                res.send('Invalid user id!');
-            })
     }
 
-    // [POST] /user/reset-password/:id/:token
-    
+    // [POST] /user/reset-password/
     resetPassword(req, res, next) {
-        const { id } = req.params;
-        UserModel.findOne({ _id: id })
+        const { token, password } = req.body;
+        jwt.verify(token, JWTPrivateKey, (err, payload) => {
+            if (err) {
+                console.log('310',err);
+            }
+
+            const id = payload.id;
+
+            UserModel.findOne({ _id: id })
             .then(user => {
                 if (!user) return res.status(404).json({ message: 'Invalid user id' });
-                const { password, confirm_password } = req.body;
-                jwt.verify(req.params.token, JWTPrivateKey + user.password, (err) => {
+
+                jwt.verify(req.params.token, JWTPrivateKey, (err) => {
                     if (err) return res.status(401).json({ message: 'Invalid or expired token' });
                     bcrypt.hash(password, saltRounds, (err, hashedPwd) => {
                         if (err) return res.json({ message: `Error when hash password with bcrypt: ${err}` });
@@ -426,6 +340,8 @@ class userController {
                     error: err.message
                 });
             })
+        })
+        
     }
     
 

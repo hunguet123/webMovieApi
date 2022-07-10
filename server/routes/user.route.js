@@ -14,5 +14,8 @@ router.get('/register', userController.register);
 router.post('/email/excited', userController.emailExcited);
 router.get('/verify/:token', userController.verify);
 router.post('/email/send-code', userController.sendCode);
+router.post('/forgot-password/send-code', userController.sendCodeForgotPassword);
+router.post('/forgot-password/verify-code', userController.verifyForgotPasswordCode);
+router.post('/reset-password/', userController.resetPassword);
 
 module.exports = router;
