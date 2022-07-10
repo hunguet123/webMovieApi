@@ -13,5 +13,6 @@ router.post('/register', userController.submitRegister);
 router.get('/register', userController.register);
 router.post('/email/excited', userController.emailExcited);
 router.get('/verify/:token', userController.verify);
+router.post('/email/send-code', userController.sendCode);
 
 module.exports = router;

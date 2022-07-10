@@ -34,16 +34,19 @@ const transporter = nodemailer.createTransport({
 // [Bcrypt]
 //const saltRounds = process.env.SALT_ROUNDS;
 // do không dùng được env.SALT_ROUNDS nên dùng luôn là 10
-const saltRounds = process.env.SALT_ROUNDS;
-console.log(saltRounds)
+const saltRounds = 10;
 
 // [JWT sign]
 // Default algorithm: HMAC SHA256
 const JWTPrivateKey = process.env.JWT_PRIVATE_KEY;
 
-var CODE = Math.random().toString(36).substring(2,7);
+var CODE
 
-const TIMEOUT = 6000;
+function creatCode() {
+    CODE = Math.random().toString(36).substring(2,7);
+}
+
+const TIMEOUT = 60000;
 
 var info = {};
 
@@ -88,35 +91,64 @@ class userController {
             });
         }
 
-        let text = 'Nhập Code để xác minh tài khoản („• ֊ •„) \n Lưu ý: Không nhập code sẽ không đăng nhập được \n Code: ' + CODE;
-        console.log(CODE);
         let token = jwt.sign({name: name, email: email, password: password }, JWTPrivateKey, { expiresIn: '3h' });
-            info = {
-                from: {
-                    name: "Ánh dễ thương (◕‿◕)",
-                    address: process.env.GOOGLE_EMAIL,
-                },
-                to: `${email}`,
-                subject: "BÉ ƠI NHỚ NHẬP CODE ĐI",
-                text: text,
-            };
-            transporter.sendMail(info, (err,data) => {
-                if (err) {
-                    return res.status(200).json({
-                        message: 'no email on google', 
-                    })
-                } else {
-                    // render ra trang nhap code nhap
-                    res.redirect(`/user/verify/${token}`);
-                }
-            });
-
+        res.redirect(`/user/verify/${token}`);
     }    
+
+    //[POST] /user/email/send-code
+    sendCode(req, res, next) {
+        const {user} = req.body;
+        const email = user.email;
+        creatCode();
+        
+        let text = 'Nhập Code để xác minh tài khoản („• ֊ •„) \n Lưu ý: Không nhập code sẽ không đăng nhập được \n Code: ' + CODE;
+        info = {
+            from: {
+                name: "Ánh dễ thương (◕‿◕)",
+                address: process.env.GOOGLE_EMAIL,
+            },
+            to: `${email}`,
+            subject: "BÉ ƠI NHỚ NHẬP CODE ĐI",
+            text: text,
+        };
+
+        console.log(CODE);
+        transporter.sendMail(info, (err,data) => {
+            if (err) {
+                return res.status(200).json({
+                    message: 'no email on google', 
+                })
+            } else {
+                // render ra trang nhap code nhap
+                res.status(202).json({
+                    message: 'da gui mai' 
+                })
+            }
+        });
+        //setInterval(creatCode(), TIMEOUT);
+    }
 
     //[GET] /user/verify/:token
     verify(req, res, next) {
+        let email, name, password;
         const { token } = req.params;
-        res.render('verify', {token: token});
+        jwt.verify(token, JWTPrivateKey, (err, payload) => {
+            if (err) {
+                return res.status(500).json({
+                    message: `Invalid or expired token`,
+                    error: err.message
+                });
+            }
+            email = payload.email;
+            name = payload.name;
+            password = payload.password;
+        })
+        bcrypt.hash(password, saltRounds, function(err, hashedPwd) {
+            res.render('verify', {token: token, 
+                user: {name: name, email: email, password: hashedPwd},
+            });
+        });
+   
     }
 
 
@@ -144,7 +176,6 @@ class userController {
                             error: err.message
                         });
                     }
-                    console.log(email, name, password);
                     let userRecord = new UserModel({
                         name: name,
                         email: email,
@@ -184,7 +215,6 @@ class userController {
     verifyLogin(req, res, next) {
         let account = req.body.account;
         let password = req.body.password;
-        console.log(req.body);
         UserModel.findOne({ email: account } )
             .then(user => {
                 if (!user) {

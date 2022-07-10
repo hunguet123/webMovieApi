@@ -9,13 +9,13 @@
 </head>
 <body>
     <header>
-        <a href="#"><img src="../public/asset/logo.png" alt=""></a>
-        <a href="/user/login">Đăng nhập</a>
+        <a href="#"><img src="/public/asset/logo.png" alt=""></a>
+        <a href="#">Đăng nhập</a>
     </header>
     <section class="body">
         <div class="slide slideSubmit">
             <div class="slide-img">
-                <img src="../public/asset/devices.png" alt="">
+                <img src="/public/asset/devices.png" alt="">
             </div>
             <span class="slide-step">Bước <span>1</span> trong <span>2</span></span>
             <h3 class="slide-title">Hoàn tất thiết lập tài khoản của bạn</h3>
@@ -25,20 +25,25 @@
         </div>
         <div class="slide slideVerify">
             <div class="slide-img">
-                <img src="../public/asset/devices.png" alt="">
+                <img src="/public/asset/devices.png" alt="">
             </div>
             <span class="slide-step">Bước <span>2</span> trong <span>2</span></span>
             <h3 class="slide-title">Kích hoạt tài khoản</h3>
             <p class="slide-sologan">Chỉ cần vài bước nữa là bạn sẽ hoàn tất!</p>
             <p class="slide-text">Chúng tôi đã gửi mã xác nhận vào email của bạn</p>
-            <form action="/user/activate-account/<%=token%>" method="post">
+            <form action="">
+                <div class="form-input">
+                    <input name="email" type="text" id="email" value="nguyenquochuy1732@gmail.com" required>
+                    <label class="placeholder" for="email">email</label>
+                    <span id="messageErrorCode"></span>
+                </div>
                 <div class="form-input">
                     <input name="code" type="password" id="code" required>
                     <label onclick="togglePassword(this, '#code')" class="togglePassword" for="code">Hiện</label>
                     <label class="placeholder" for="code">mã code</label>
                     <span id="messageErrorCode"></span>
                 </div>
-                <button type="submit">Xác nhận</button>
+                <button type="submit" id="btn-verify-2">Xác nhận</button>
             </form>
         </div>
     </section>
@@ -80,12 +85,21 @@
 <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 <script>
-     window.addEventListener('click', function(event) {
+    const user = {
+        username:'<%= user.name %>',
+        email: '<%= user.email %>',
+        password: '<%= user.password %>'
+    }
+
+    document.querySelector('#email').value = user.email
+
+    window.addEventListener('click', function(event) {
         if(!document.querySelector('.footer .footer-languages > div').contains(event.target))
             document.querySelector('.footer .footer-languages').classList.remove('active')
         else 
             document.querySelector('.footer .footer-languages').classList.toggle('active')
     })
+
     function togglePassword(element, query) {
         if(document.querySelector(query).type == 'password') {
             document.querySelector(query).type = 'text'
@@ -97,10 +111,35 @@
         }
     }
 
+    function handleSentEmail(url) {
+        document.querySelector('#btn-verify-2').classList.add('active')
+        //token = (new URL(url)).searchParams.get('token')
+    }
+
     document.querySelector('#btn-verify-1').onclick = function() {
         document.querySelector('.slideSubmit').style.display = 'none'
         document.querySelector('.slideVerify').classList.add('active')
+        //send email code
+        const response = fetch('/user/email/send-code', {
+            method: 'post',
+            body: JSON.stringify({user}),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then((data) => handleSentEmail(data.url), (data) => handleSentEmail(data.url))
     }
+
+    document.querySelector('form').onsubmit = function(e) {
+        e.preventDefault()
+        const response = fetch('/user/activate-account/' + '<%= token%>', {
+            method: 'post',
+            body: JSON.stringify({code: document.querySelector('#code').value }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+    }
+
 </script>
 </body>
 </html>
