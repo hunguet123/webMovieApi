@@ -1,17 +1,15 @@
 var Validate = function(object) {
-    let formElement = document.querySelector(object.form)
-    formElement.onsubmit = async function(e) {
-        e.preventDefault()
+    // let formElement = document.querySelector(object.form)
+    const handleOnsubmit = async function() {
         let isTrue = true
         for(let i = 0; i < object.rules.length; i++) {
             let result = await object.rules[i].method(...object.rules[i].params)
-            console.log(result);
             if(!result)
                 isTrue = false
         }
-        if(isTrue)
-           formElement.submit()
+        return isTrue
     }
+    return handleOnsubmit
 }
     
  

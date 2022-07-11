@@ -210,6 +210,10 @@ class userController {
         res.render('login');
     }
     
+    forgotPassword(req, res, next) {
+        res.render('forgotPassword')
+    }
+
 
     // [POST] /user/submit-login
     verifyLogin(req, res, next) {
@@ -252,16 +256,18 @@ class userController {
 
     // [POST] /user/forgot-password/send-code
     sendCodeForgotPassword(req, res, next) {
-        UserModel.findOne({ email: req.body.email })
+        const {email} = req.body;
+        UserModel.findOne({ email: email })
             .then(user => {
                 if (!user) {
-                    return res.status(404).json({ message: `User not found` });
+                    return res.status(404).json({ message: 0 });
                 }
                 const payload = { email: user.email, id: user.id };
                 let token = jwt.sign(payload, JWTPrivateKey, { expiresIn: '15m' });
                 
                 creatCode();
-
+                console.log(CODE);
+            
                 let text = 'Nhập Code để đặt lại mật khẩu („• ֊ •„) \n \n Code: ' + CODE;
                 info = {
                     from: {
@@ -275,9 +281,9 @@ class userController {
 
                 transporter.sendMail(info, (err, data) => {
                     if (err) {
-                        res.status(500).json({ message: `Error when sending an email`, error: err.message });
+                        res.status(500).json({ message: 1, error: err.message });
                     } else {
-                        res.status(200).json({ message: `Password reset Code has been sent to user email`, token: token });
+                        res.status(200).json({ message: 2, token: token });
                     }
                 });
             })
@@ -304,22 +310,21 @@ class userController {
     // [POST] /user/reset-password/
     resetPassword(req, res, next) {
         const { token, password } = req.body;
+        console.log(token);
         jwt.verify(token, JWTPrivateKey, (err, payload) => {
             if (err) {
                 console.log('310',err);
             }
-
             const id = payload.id;
-
-            UserModel.findOne({ _id: id })
+            UserModel.findById(id)
             .then(user => {
                 if (!user) return res.status(404).json({ message: 'Invalid user id' });
 
-                jwt.verify(req.params.token, JWTPrivateKey, (err) => {
+                jwt.verify(token, JWTPrivateKey, (err) => {
                     if (err) return res.status(401).json({ message: 'Invalid or expired token' });
                     bcrypt.hash(password, saltRounds, (err, hashedPwd) => {
                         if (err) return res.json({ message: `Error when hash password with bcrypt: ${err}` });
-                        UserModel.findOneAndUpdate({ _id: id }, { password: hashedPwd })
+                        UserModel.findByIdAndUpdate(id, { password: hashedPwd })
                             .then(user => {
                                 res.status(200).json({
                                     message: `Update new password successfully`,

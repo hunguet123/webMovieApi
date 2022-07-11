@@ -102,7 +102,7 @@
 <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 <script src="../public/validate.js"></script>
 <script>
-    new Validate({
+    const handleSubmit =  new Validate({
             form: '.form',
             rules:[
                 Validate.isValidate('#name', '#messageErrorName', [{regex: /^[a-zA-Z ]+$/, message: 'Vui lòng nhập đúng tên của bạn'}]),
@@ -118,8 +118,14 @@
                 Validate.isConfirm('#password', '#confirmPassword', '#messageErrorConfirmPassword', 'Mật khẩu không khớp'),
             ]
         })
-</script>
-<script>
+    document.querySelector('.form').onsubmit = async function(e) {
+        e.preventDefault()
+        handleSubmit()
+        .then(data => {
+            if(data)
+            document.querySelector('.form').submit()
+        })
+    }
     window.addEventListener('click', function(event) {
         if(!document.querySelector('.footer .footer-languages > div').contains(event.target))
             document.querySelector('.footer .footer-languages').classList.remove('active')
