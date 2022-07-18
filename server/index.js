@@ -31,6 +31,9 @@ const db = require('./config/db/index.db');
 
 db.connect();
 
+//Connect to MySQL server
+const MySQL = require('./config/db/dbMysql');
+
 //------ Middleware -----//
 //[express] Serving static files in express
 app.use('/public', express.static(path.join(__dirname, 'public')));

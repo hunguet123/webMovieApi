@@ -206,7 +206,6 @@ class userController {
     // [GET] /user/login
     
     login(req, res, next) {
-        console.log(req.body)
         res.render('login');
     }
     
@@ -238,11 +237,11 @@ class userController {
                             //Default algorithm: HMAC SHA256
                             let token = jwt.sign({ email: user.email }, JWTPrivateKey, { expiresIn: '3h' });
                             res.cookie('session-token', token);
-                            //res.redirect('/user/profile');
-                            res.status(200).json({
-                                message: 'Sign in successfully',
-                                user_data: user
-                            })
+                            res.redirect('/movie/');
+                            // res.status(200).json({
+                            //     message: 'Sign in successfully',
+                            //     user_data: user
+                            // })
                         }
                     });
             })
