@@ -38,10 +38,38 @@ class CommentController {
                     icon: icon,
                 }
             }
-        }).then(()=>{
-            res.status(202).json({
-                message: "save a new comment in movie_id successfully",
-            })
+        }).then((result)=>{
+            if (result != null) {
+                res.status(202).json({
+                    message: "save a new comment in movie_id successfully",
+                })
+            }
+            else {
+
+                let newComment = new CommentModel({
+                    movie_id: movie_id,
+                    comments: {
+                        sender: sender_id,
+                        comment: comment,
+                        icon: icon,
+                    }
+                });
+
+                newComment.save().then(()=>{
+                    res.status(202).json({
+                        message: "save a new comment in movie_id successfully",
+                    })
+                })
+                .catch((err) => {
+                    res.status(503).json({
+                        message: err,
+                    })
+                })
+
+
+
+            }
+            
         })
         .catch((err) =>{
             res.status(502);
