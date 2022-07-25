@@ -1,4 +1,3 @@
-const { get } = require('mongoose');
 const mySQL = require('../config/db/dbMysql');
 
 class movieController {
@@ -10,14 +9,12 @@ class movieController {
 */
     movieList(req, res, next) {
         mySQL.query(
-            `select * from webmovie.movies 
-            where id in 
-            (select movie_id from
-            (select movie_id, sum(views) as totalview
-            from webmovie.episodes
-            group by movie_id
-            order by totalview desc
-            limit 10) temp);`,
+            `select webmovie.movies.*, sum(webmovie.episodes.views) as views, sum(webmovie.episodes.time) as time
+            from webmovie.movies inner join webmovie.episodes
+            on webmovie.movies.id = webmovie.episodes.movie_id
+            group by webmovie.episodes.movie_id
+            order by views desc
+            limit 10;`,
             function(err, results ) {
               if (err) {
                 res.status(500).json({
