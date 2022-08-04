@@ -24,46 +24,38 @@ class CommentController {
     })
    }
 
-   //[GET]/inputComment/:id
-   /*
-    */
-   inputComment(req, res, next) {
-        const movie_id = req.params.id;
-        const {sender_id, comment, icon } = req.body;
+   inputComment(movie_id, sender_id, comment, icon) {
         CommentModel.findOneAndUpdate({movie_id: movie_id}, {
             $push: {
                 comments: {
                     sender: sender_id,
                     comment: comment,
-                    icon: icon,
+                    $push: {
+                        icon: icon,
+                    }
                 }
             }
         }).then((result)=>{
             if (result != null) {
-                res.status(202).json({
-                    message: "save a new comment in movie_id successfully",
-                })
+                console.log("save a new comment in movie_id successfully");
             }
             else {
-
                 let newComment = new CommentModel({
                     movie_id: movie_id,
                     comments: {
                         sender: sender_id,
                         comment: comment,
-                        icon: icon,
+                        $push: {
+                            icon: icon,
+                        }
                     }
                 });
 
                 newComment.save().then(()=>{
-                    res.status(202).json({
-                        message: "save a new comment in movie_id successfully",
-                    })
+                    console.log("save a new comment in movie_id successfully");
                 })
                 .catch((err) => {
-                    res.status(503).json({
-                        message: err,
-                    })
+                    console.log(err);
                 })
 
 
@@ -72,7 +64,7 @@ class CommentController {
             
         })
         .catch((err) =>{
-            res.status(502);
+            console.log(err);
         })
    }
 }

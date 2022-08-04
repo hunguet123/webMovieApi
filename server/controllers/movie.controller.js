@@ -9,7 +9,7 @@ class movieController {
 */
     movieList(req, res, next) {
         mySQL.query(
-            `select webmovie.movies.*, sum(webmovie.episodes.views) as views, sum(webmovie.episodes.time) as time
+            `select webmovie.movies.*, sum(webmovie.episodes.views) as views
             from webmovie.movies inner join webmovie.episodes
             on webmovie.movies.id = webmovie.episodes.movie_id
             group by webmovie.episodes.movie_id

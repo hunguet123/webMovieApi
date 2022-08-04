@@ -53,6 +53,31 @@ app.set('views', path.join(__dirname, 'views'));
 //Routes init
 initRoutes(app);
 
-app.listen(BE_PORT, () => {
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
+
+const CommentController = require('../server/controllers/comment.controller');
+const commentController = require('../server/controllers/comment.controller');
+
+io.on('connection', (socket) => {
+    socket.on('setRoom', function(room_id) {
+        socket.join(room_id);
+     });
+     socket.on('submitComment', (data) => {
+        io.in(data.room_id).emit('newComment', data);
+        const movie_id = data.movieID;
+        const sender_id = data.senderID;
+        const comment = data.comment;
+        const icon = data.icon;
+        commentController.inputComment(movie_id, sender_id, comment, icon);
+     })
+  });
+
+
+server.listen(BE_PORT, () => {
     console.log(`Running on port ${BE_PORT}`);
 })
+
+module.exports = {io};

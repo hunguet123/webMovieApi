@@ -10,7 +10,7 @@ const CommentSchema = new Schema(
             {
                 sender: {type: mongoose.ObjectId},
                 comment: {type: String},
-                icon: {type: String, default: ""},
+                icon: [{type: String, default: ""}],
                 deleteted: {type: Boolean, default: false},
             }
         ],
