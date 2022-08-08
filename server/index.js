@@ -58,26 +58,51 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
-const CommentController = require('../server/controllers/comment.controller');
 const commentController = require('../server/controllers/comment.controller');
-
 io.on('connection', (socket) => {
-    socket.on('setRoom', function(room_id) {
-        socket.join(room_id);
-     });
-     socket.on('submitComment', (data) => {
-        io.in(data.room_id).emit('newComment', data);
-        const movie_id = data.movieID;
-        const sender_id = data.senderID;
+    socket.on('joinRomm', (roomID) => {
+        socket.join(roomID);
+    })
+    socket.on('submitComment', (data) => {
+        const movie_id = data.movie_id;
+        const sender_id = data.sender_id;
         const comment = data.comment;
+        io.to(movie_id).emit('renderComment', {sender_name: data.senderName, comment: comment});
+        commentController.inputComment(movie_id, sender_id, comment);
+    });
+    socket.on('submitIcon', (data) => {
+        const movie_id = data.movie_id;
+        const comment_id = data.comment_id;
         const icon = data.icon;
-        commentController.inputComment(movie_id, sender_id, comment, icon);
-     })
+        const from = data.from;
+        io.to(movie_id).emit('renderIcon', {sender_name: data.senderName, comment: comment, icon: icon});
+        commentController.pushIcon(movie_id, comment_id, icon, from);
+    });
+    socket.on('changeIcon', (data) => {
+        const movie_id = data.movie_id;
+        const comment_id = data.comment_id;
+        const newIcon = data.newIcon;
+        const from = data.from;
+        io.to(movie_id).emit('renderIcon', {sender_name: data.senderName, comment: comment, icon: icon});
+        commentController.changeIcon(movie_id, comment_id, newIcon, from);
+    });
+    socket.on('submitRepComment', (data)=> {
+        const movie_id = data.movie_id;
+        const comment_id = data.comment_id;
+        const sender_id = data.sender_id;
+        const comment = data.comment;
+        commentController.inputRepComment(movie_id, comment_id, sender_id, comment);
+    });
+    socket.on('submitIconRepComment', (data) => {
+        commentController.pushRepIcon(data.movie_id, data.comment_id, data.repComment_id , data.icon, data.from);
+    });
+    socket.on('changeIconRepComment', (data) => {
+        commentController.changeRepIcon(data.movie_id, data.comment_id, data.repComment_id, data.from_repIcon, data.newIcon);
+    })
+
   });
 
 
 server.listen(BE_PORT, () => {
     console.log(`Running on port ${BE_PORT}`);
 })
-
-module.exports = {io};
